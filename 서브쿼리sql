@@ -1,0 +1,109 @@
+--서브쿼리
+-- 하나의 SQL문장 내부에존재하는 또 다른 SELECT 문장
+--DML (SELECT, INSERT, UPDATE, DELETE)에 사용 가능
+/*
+- 서브쿼리는 ( ) 로 묶는다 [권장]
+- 서브쿼리는 연산자의 오른쪽에 [권장]
+- 단일 행인 경우 비교 연산자 가능 ( >, >=, <, <=, =, !=(<>) )
+- 복수 행인 경우 IN, NOT IN, ANY, ALL, EXISTS
+- ORDER BY에선 사용 못한다
+*/
+
+--1) 전체 사원들 평균급여 조회
+SELECT AVG(SAL) FROM EMP;
+
+-- 2) 전체 사원들 중 평균급여보다 낮은 급여를 받는 사원의 명단을 조회
+SELECT empno, ename, sal
+FROM emp
+WHERE sal <(SELECT AVG(SAL) FROM EMP); 
+
+-- 1) 가장 많은 월급이 얼마인지 조회
+SELECT MAX(sal) from emp;
+
+-- 2) 월급을 가장 많이 받는 사람의 정보를 조회
+SELECT empno, ename, sal
+FROM emp
+WHERE sal = (SELECT MAX(sal) from emp); 
+
+
+-- 평균급여보다 높고 최대 급여보다 낮은 월급을 받는 사원 명단 조회
+--서브쿼리
+SELECT empno, ename, sal
+FROM emp
+WHERE sal > (SELECT AVG(SAL) FROM EMP) 
+  and sal < (SELECT MAX(sal) from emp); 
+
+--서브쿼리 + 조인  
+SELECT empno, ename, sal
+FROM emp e1,(SELECT AVG(SAL) avg, MAX(sal) max FROM emp) e2
+WHERE e1.sal >e2. avg and e1.sal < e2.max;
+
+-- 월급순으로 상위 10명의명단을 출력 
+-- 1) 월급순으로 명단정리
+SELECT empno, ename, sal from emp ORDER BY nvl(sal,0) DESC;
+
+-- 2) 상위 10명까지 출력
+SELECT * 
+FROM (SELECT empno, ename, sal from emp ORDER BY nvl(sal,0) DESC)
+where ROWNUM<=10;
+
+--업무별로 최소 급여를 받는 사원의 정보를 사원번호, 이름,담당업무, 급여를 출력
+SELECT MIN(SAL) FROM EMP ;
+SELECT job, empno, ename, sal 
+from emp  GROUP BY job
+ORDER BY nvl(sal,0) ASC ;
+
+-- 10번 부서사원들의 업무와 동일한 직원들 검색
+ 
+--적어도 한명의 사원으로부터 보고를 받을 수 있는 사원의 정보를 사원번호, 이름, 업무를 출력
+
+--<< 연습문제 >> 서브쿼리
+select * from EMP;
+select * from DEPT;
+-- 1. SCOTT의 급여보다 많은 사원의 정보를 사원번호, 이름, 담당업무, 급여를 출력
+SELECT sal FROM EMP where ename='SCOTT';
+
+SELECT empno, ename, job, sal 
+FROM emp
+where sal > (SELECT sal FROM EMP where ename='SCOTT')
+ORDER BY nvl(sal,0) DESC;
+
+-- 2. 30번 부서의 최소 급여보다 각부서의 최소 급여가 높은 부서를 출력
+SELECT min(sal) FROM EMP where deptno=30;
+
+select deptno, min(sal) min
+from emp
+group by deptno
+having min(sal) >(select min(sal) from emp where deptno = 30)
+ORDER BY nvl(min,0)DESC;
+
+-- 3. 업무별로 평균 급여 중에서 가장 적은 급여를 가진 직업을 출력
+select job, round(avg(sal)) avg from emp group by job;
+select min(round(avg(sal))) m_avg FROM emp group by job;
+
+select job
+from (select job, round(avg(sal)) avg from emp group by job) s1,
+     (select min(round(avg(sal))) m_avg FROM emp group by job) s2
+where s1.avg = s2.m_avg;
+
+-- 4. 사원번호가 7521의 업무와 같고 사번 7934인 직원보다 급여를 많이 받는 사원의 정보를 출력
+select job from emp where empno=7521;
+select sal from emp where empno=7934;
+
+select *
+from emp
+where job=(select job from emp where empno=7521) 
+and sal<(select sal from emp where empno=7934);
+
+-- 5. 업무가 ‘MANAGER’인 사원의 정보를 이름, 업무, 부서명, 근무지를 출력 
+select e.ename ename, e.job job, d.dname dname, d.loc loc
+from emp e inner join dept d
+on e.deptno = d.deptno 
+where e.job ='MANAGER';
+
+-- 6. 'WARD'와 부서와 업무가 같은 사원 명단 출력
+select job, deptno from emp where ename='WARD';
+
+select *
+from emp e1,(select deptno, job from emp where ename = 'WARD') e2
+where e1.deptno =e2.deptno and e1.job = e2.job;

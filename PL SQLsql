@@ -1,0 +1,138 @@
+--  [ PL/SQL ]
+/* Procedural language extension to Structured Query Language
+           -SQL을 확장한 순차적 처리 언어
+           -SQL과 일반 프로그래밍 언어의 결합
+           -성능향상 : 여러 SQL 문장을 하나의 블록으로묶어서 한 번에 처리하기 속도 개선
+    
+
+(*) PL/SQL은 어려운 것이 아니라 새로운 문법이다.
+이해가 안 된다는 것은 말이 안 되는 게 이 문법을 보며 문제를 풀어야지 왜 이 문법을 본인의 고정 박힌 사고에넣으려 하고 안되면 이해 안 된다고 하는데 이건 이해의 문제가 아니다.
+ 
+그럼에도 기존 개발자들도 어렵다고 느끼는 이유는
+에러가 정확하게 출력이 안되고 뭔가가 잘못되면 그냥 실행이 안되기 때문에
+어디가 어떻게 정확하게 에러라고 이클립스처럼 찾아주지 않기 때문에 */
+
+set serveroutput on; 
+DECLARE
+  v_empno number;
+  v_ename varchar2(30);
+  v_hiredate date;
+  
+BEGIN
+  SELECT empno, ename, hiredate
+  INTO v_empno, v_ename, v_hiredate
+FROM emp
+WHERE ename=upper('SCOTT');
+  
+  -- “” 사용하면 에러 ‘’사용해야
+  dbms_output.put_line('사번 #' || v_empno);
+  dbms_output.put_line('이름 #' || v_ename);
+  dbms_output.put_line('입사일 #' || v_hiredate);
+END;
+
+
+SET SERVEROUTPUT ON;
+ACCEPT p_ename PROMPT '조회할 사원 이름은?'
+DECLARE
+  -- EMP 테이블의 컬럼들로 레코드타입 변수 선언
+  emp_record  emp%ROWTYPE;
+  
+  -- 입력한 이름을 저장할 변수 선언
+  v_ename     emp.ename%TYPE := '&p_ename';
+  
+BEGIN
+SELECT *              -- *는 emp%ROWTYPE으로 정의시 가능
+  INTO emp_record
+  FROM emp
+  WHERE ename = upper( v_ename );
+  
+dbms_output.put_line('사원번호 : ' || to_char(emp_record.empno) );
+dbms_output.put_line('사 원 명 : ' || emp_record.ename );
+dbms_output.put_line('업    무 : ' || emp_record.job );
+ 
+EXCEPTION
+WHEN NO_DATA_FOUND THEN dbms_output.put_line('&p_ename' || '의 자료는 없습니다');
+  WHEN TOO_MANY_ROWS THEN dbms_output.put_line('&p_ename' || '자료가 2건 이상입니다.');
+  WHEN OTHERS THEN dbms_output.put_line('검색시 오류가 발생하였습니다.');
+END;
+/
+SET SERVEROUTPUT OFF
+
+
+--PL/SQL 제어
+--@ 조건문
+--1.이름, 급여, 부서번호를 입력 받아 사원 테이블에 입력시 부서번호가 20이면 급여의30%를 추가하고, 사번은 시퀀스를 이용한다.
+create SEQUENCE seq_emp_empno;
+ACCEPT p_name PROMPT'이름?'
+ACCEPT p_sal PROMPT'월급?'
+ACCEPT p_deptno PROMPT'부서번호?'
+DECLARE 
+    v_name      emp.ename%type     :='&p_name';
+    v_sal       emp.sal%type      := &p_sal;
+    v_deptno    emp.deptno%TYPE   := &p_deptno;
+    
+BEGIN
+    IF v_deptno = 20 Then v_sal := v_sal*1.3;
+    END IF;
+    INSERT INTO emp(empno,ename,sal, deptno)  
+    VALUES (seq_emp_empno.nextval, v_name, v_sal, v_deptno);
+COMMIT; 
+END;
+/
+
+--2.이름을 입력받아 그 사람의 업무가 MANAGER이면 10% , ANALYST이면 20%, SALESMAN이면 30%, PRESIDENT이면 40%, CLERK이면 50% 급여를 증가한다.
+ACCEPT p_name PROMPT'이름을 입력하세요?'
+DECLARE 
+    v_name      emp.ename%type     :='&p_name';
+    v_job      emp.job%type;
+    v_sal      emp.sal%type;
+    v_empno     emp.empno%type;
+BEGIN
+    -- 1. 이름으로 검색한 결과를 내부변수에 저장(select)
+    SELECT empno, sal, job 
+    into v_empno, v_sal,v_job
+    FROM emp WHERE ename= v_name;
+    -- 2. 업무에 따른 월급 증가 계산
+     CASE v_job   WHEN  'MANAGER' Then v_sal := v_sal*1.3;
+                   WHEN  'ANALYST' THEN v_sal := v_sal*1.2;
+                   WHEN  'SALESMAN' THEN v_sal := v_sal*1.3;
+                   WHEN  'PRESIDENT' THEN v_sal := v_sal*1.4;
+                   WHEN 'CLERK' THEN v_sal := v_sal*1.5;
+    END CASE;
+    -- 3. 해당 사원의 월급을 수정
+    UPDATE emp SET sal = v_sal WHERE empno= v_empno;
+    DBMS_OUTPUT.PUT_LINE(v_name ||'님 정보수정');
+END;
+/
+select * from emp;
+
+
+--@ 반복문
+set serveroutput on;
+-- 1.1부터 9까지의숫자를 입력 받아 해당하는 구구단을 출력
+ACCEPT p_dan PROMPT  '구구단 단을 입력 : '
+DECLARE
+  v_dan   INTEGER := &p_dan;
+    cnt   INTEGER :=0 ;
+BEGIN
+    FOR i IN 1..9 LOOP
+        cnt := v_dan * i;
+        dbms_output.put_line( v_dan || ' * ' || i || ' = ' || cnt );
+    END LOOP;    
+END;
+
+-- 2.1부터100까지의 홀수의 합과 짝수의 합을 출력 
+
+DECLARE
+  v_odd   INTEGER :=0 ;
+  v_even  INTEGER :=0 ;
+  
+BEGIN
+    FOR i IN 1..100 LOOP
+        IF i mod 2 = 0 THEN v_even := v_even+i;
+        ELSE v_odd := v_odd +i;
+        END IF;
+    END LOOP;
+    dbms_output.put_line('짝수의 합' || v_even );
+    dbms_output.put_line('홀수의 합' || v_odd );
+END;

@@ -1,0 +1,87 @@
+-- [ 다중행인 경우 ]         IN, NOT IN, ANY, ALL, EXISTS
+--  IN         : 반환된 목록의 각각과 비교
+--  ANY     : 비교연산자( >, >=, <, <=, =, !=(<>) ) 와 반환된 목록의 각각과 비교
+--  ALL      : 비교연산자( >, >=, <, <=, =, !=(<>) ) 와 반환된 모든 목록과 비교
+--  EXISTS  : 적어도 한 개의 행을 리턴하면 true, 그렇지 않으면 false
+
+ --업무별로 최소 급여를 받는 사원의 정보를 사원번호, 이름,담당업무, 급여를 출력
+ -- 1) 업무별로 최소 급여
+SELECT MIN(SAL) FROM EMP GROUP BY JOB;
+ 
+ SELECT empno, ename,  job, sal
+ FROM emp
+ WHERE (job, sal) IN (SELECT job, MIN(sal) FROM emp GROUP BY Job);
+ 
+-- 10번 부서사원들의 업무와 동일한 직원들 검색
+SELECT JOB FROM EMP WHERE DEPTNO=10;
+
+SELECT *
+FROM EMP
+WHERE JOB IN (SELECT JOB FROM EMP WHERE DEPTNO=10);
+
+SELECT *
+FROM EMP
+WHERE JOB = ANY (SELECT JOB FROM EMP WHERE DEPTNO=10);
+
+-- 부서별 최소급여를 받는사원보다 많은 급여를 받는 사원의 정보 출력
+SELECT MIN(sal) min  FROM EMP GROUP BY  DEPTNO;
+
+SELECT *
+FROM EMP
+WHERE SAL > ANY (SELECT MIN(sal) min  FROM EMP GROUP BY  DEPTNO);
+
+SELECT *
+FROM EMP
+WHERE SAL > ALL (SELECT MIN(sal) min  FROM EMP GROUP BY  DEPTNO);
+
+--적어도 한명의 사원으로부터 보고를 받을 수 있는 사원의 정보를 사원번호, 이름, 업무를 출력
+SELECT  e.ename, e.empno, e.job
+FROM emp e
+WHERE exists ( SELECT * FROM emp e2 WHERE e.empno=e2.mgr );
+
+-- 부하직원(말단직원)이 없는 사원들을 검색
+SELECT  e.ename, e.empno, e.job
+FROM emp e
+WHERE not exists ( SELECT * FROM emp e2 WHERE e.empno=e2.mgr );
+
+
+-- INSERT / UPDATE / DELETE에서
+--(1) 부서별 급여통계 테이블 생성
+create table stat_salary ( 
+           stat_date   date  not  null,        -- 날짜
+           dept_no   number,                    --부서
+           emp_count number,      --사원수
+           tot_salary number,        --급여총액
+           avg_salary number );     -- 급여평균
+           
+--(2) 날짜와 부서번호 입력
+ insert into stat_salary (stat_date, dept_no)
+ select sysdate, deptno from dept;
+ 
+ select *from stat_salary;
+--(3) 사원수, 급여총액, 평균급여 입력(?) -> 수정
+ UPDATE stat_salary s
+ set (s.emp_count, s.tot_salray, s.svg_salary)
+    = (select count(*), sum(sal),  avg(sal) from emp e where e.deptno = s.dept_no group by deptno );
+    
+CREATE table emp_copy as select * from emp;
+
+SELECT *  FROM emp ;
+
+ -- 1. scott의 업무와 급여로 jones의 업무와 급여를 수정
+ select * from emp_copy where ename = 'SCOTT';
+ 
+ update emp_copy e
+ set ( e.job, e.sal) = (select e2.job, e2.sal from emp_copy e2 where e2.ename = 'scott')
+ WHERE E.ENAME = 'JONES'; 
+  
+ -- 2. 부서명이 sales인 사원의 정보를 삭제
+
+ -- 3.  King에게 보고하는 모든 사원의 이름과 급여를 출력
+
+
+ -- 4. 월급이 30번 부서의 최저 월급보다 많은 사원들을 출력
+
+
+ -- 5. 10번 부서의 직원들 중 30번 부서의 사원과 같은 업무를 맡고 있는 사원의 이름과 업무를 출력
+ 

@@ -1,0 +1,95 @@
+-- 조인 : 하나 이상의 테이블로부터 데이터를 검색할 때        
+--사원테이블(emp)에 사원명과 부서테이블(dept)에 그 사원의 부서명을 출력
+--( 두 테이블만 기술 =>Cartesian Product)
+SELECT ename, dname
+FROM emp, dept;      
+
+ -- // 내부조인 // --  
+-- 두 테이블 연결 => 조인 ( 내부조인 ) 출력 소속 명확하게 권장
+SELECT emp.ename, dept.dname, emp.deptno
+FROM emp, dept
+WHERE emp.deptno = dept.deptno;
+
+-- 테이블 명이 길 경우 별칭 지정 가능
+SELECT e.ename, d.dname, e.deptno
+FROM emp e, dept d
+WHERE e.deptno = d.deptno;
+
+-- 컬럼명까지 별칭 지정 권장 // 옛날방식
+SELECT e.ename ename, d.dname ename, e.deptno deptno
+FROM emp e, dept d
+WHERE e.deptno = d.deptno;
+
+--ANSI 조인 ( 표준화 ) 위와 같은 코딩
+select e.ename, d.dname, d.deptno
+from emp e INNER JOIN dept d
+ON e.deptno = d.deptno;
+
+-- // 외부조인 // -- 
+-- 외부조인 => 없는 데이터를 포함하여 조인, 한 테이블에 공통 컬럼값이 없더라도(null이라도) 검색
+ --     (+) : 해당 데이터가 존재하지 않더라도 이를 무시하고 조인에 참여
+  /*      -세 개의 테이블 조인시 한 조건이라도 외부조인이면 다른 조인에도 (+)를 붙여야함
+           -(+) 컬럼에만 붙이고, OR 연산자와 사용 못함
+           -두 테이블에 모두 (+)를 붙일 수 없음
+           -(+)이 붙은 컬럼과 IN 연산자, 서브쿼리를같이 사용 못함 */
+
+--  기존문법에서 (+)가 데이터가 없는 테이블에 붙였다면, 
+--  LEFT나 RIGHT는 반대로 데이터가 있는 테이블에 붙인다.
+
+--1)LEFT OUTER JOIN 
+SELECT e.ename ename, d.dname ename, e.deptno deptno
+FROM emp e, dept d
+WHERE e.deptno = d.deptno(+);
+
+select e.ename, d.dname, d.deptno
+from emp e LEFT OUTER JOIN dept d
+ON e.deptno = d.deptno;
+
+--2)RIGHT OUTER JOIN 
+SELECT e.ename ename, d.dname ename, d.deptno deptno
+FROM emp e, dept d
+WHERE e.deptno(+) = d.deptno;
+
+select e.ename, d.dname, d.deptno
+from emp e RIGHT OUTER JOIN dept d
+ON e.deptno = d.deptno;
+
+--  기존 문법에서는 양 쪽에 (+)에 붙일 수 없는데, FULL OUTER JOIN으로 가능.
+SELECT e.ename ename, d.dname ename, d.deptno deptno
+FROM emp e, dept d
+WHERE e.deptno(+) = d.deptno(+);    --에러
+
+select e.ename, d.dname, d.deptno
+from emp e FULL  OUTER JOIN dept d
+ON e.deptno = d.deptno;
+
+/*집합 SET
+    - UNION      합집합
+    - UNION ALL  합집합 + 중복 2번 출력
+    - INTERESCT  교집합
+    - MINUS      차집합
+*/
+-- 업무가 CLEEK인 사원의 사번, 사원명, 업무, 부서번호 
+-- 10번 부서의 사번, 사원명. 업무, 부서번호
+SELECT empno, ename, job, deptno FROM emp WHERE job = 'CLEEK'
+MINUS
+SELECT empno, ename, job, deptno FROM emp WHERE deptno = 10;
+-- (CLARK, KING, MILLER)
+
+-- 사원테이블(emp)에 각 사원의 매니저를 조회
+-- 셀프조인 : 자기자신을 참조 
+select e1.empno,e1.ename, e1.mgr, e2.ename
+from emp e1, emp e2
+where e1.mgr =e2.empno;
+
+select e1.empno,e1.ename, e1.mgr, e2.ename
+from emp e1 INNER JOIN emp e2
+ON e1.mgr =e2.empno;
+
+select e1.empno,e1.ename, e1.mgr, e2.ename
+from emp e1, emp e2
+where e1.mgr =e2.empno(+);
+
+select e1.empno,e1.ename, e1.mgr, e2.ename
+from emp e1 LEFT  OUTER JOIN  emp e2 
+ ON e1.mgr = e2.empno ;

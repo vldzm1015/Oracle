@@ -1,0 +1,53 @@
+-- 뷰 (VIEW)  : 가상 테이블
+--              데이터 보안
+--              복잡한 쿼리의 사용빈도가 높은 경우
+       
+/*  [  View의 장점 ]
+    - View는 데이터베이스의 선택적인 내용을 보여줄 수 있기 때문에 데이터베이스에 대한 액세스를 제한한다
+    - 조인을 한 것처럼 여러 테이블에 대한 데이터를 View를 통해 볼 수 있다
+    - 한 개의 View로 여러 테이블에 대한 데이터를 검색한다
+    - 특정 기준에 따른 사용자 별로 다른 데이터를 액세스 할 수 있다  */
+
+CREATE OR REPLACE VIEW v_emp  AS
+           select empno, ename, deptno from emp;
+           
+ SELECT * FROM dept;     -- 원본 테이블
+ SELECT * FROM v_emp;   -- 가상테이블 ( view)
+ 
+ INSERT INTO v_emp (empno, ename, deptno) VALUES (8888,'맹심이',30);
+ INSERT INTO v_emp (empno, ename, deptno) VALUES (8888,'콩심이',30);
+ -- 에러  원본테이블 pk제약조건에 걸림
+ INSERT INTO v_emp (empno, ename, deptno) VALUES (7777,'박심이',60);
+ -- 에러  원본테이블 fk제약조건에 걸림
+ 
+ -- 가상테이블 생성
+ CREATE OR REPLACE VIEW v_emp  AS
+           SELECT empno, ename, deptno FROM emp
+           WITH READ ONLY;
+           
+INSERT INTO v_emp (empno, ename, deptno) VALUES (7777,'박심이',20);
+
+-- 사원번호, 사원명, 부서명 -> v_emp_info
+CREATE OR REPLACE VIEW v_emp_info  AS
+    select e.empno empno, e.ename ename, d.dname dname
+    from emp e , dept d
+    where e.deptno = d.deptno;
+    
+-- v_emp_info 에 입력하세요
+insert into v_emp_info (empno, ename, dname) view (8899, '옹심이','RESEARCH');
+-- 입력불가
+
+--   [ 연습 ] 부서별로 부서명, 최소급여, 최대급여, 부서의 평균 급여를 포함하는 DEPT_SUM 뷰를생성하여라.
+ CREATE OR REPLACE VIEW DEPT_SUM  AS
+           SELECT d.dname dname, min(sal) min_sal, max(sal) max_sal FROM emp e inner join dept d
+           on e.deptno = d.deptno
+           group by d.dname;
+
+ SELECT * FROM DEPT_SUM;   
+
+insert into emp (empno, ename, sal, deptno) values (8890, '홍홍홍', 10000, 20);
+-- 바로 반영됨
+
+delete from emp where empno=8890;
+
+select * from emp;

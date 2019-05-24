@@ -1,0 +1,33 @@
+/*커서(CURSOR)
+  :SQL문장을 실행할 때마다 오라클 서버는 명령이 분석되고 실행되는 곳에서 
+  메모리영역을 개방하는데, 이 영역을 커서라 한다*/
+  
+-- 1) 묵시적커서
+    -- 오라클에서자동적으로 선언
+    -- 묵시적 커서에 저장되는 데이터는 단 1행
+    
+-- 2) 명시적 커서 (FETCH CURSOR) : 사용자가 선언하는 커서
+     -- SELECT 문장을 실행하면 여러 건의 결과 집합이 추출되는데, 
+     -- 이결과 집합의 각 개별 데이터에 접근하기 위해 커서를 사용    
+     
+     
+-- Ex) 부서번호를 입력 받아 사원번호,이름, 급여를 출력
+set serveroutput on;
+
+ACCEPT p_deptno PROMPT '부서번호?'
+
+DECLARE
+    v_deptno      emp.deptno%type := &p_deptno;
+    v_empno       emp.empno%type;
+    v_ename       emp.ename%type;
+    v_sal         emp.sal%type;
+    CURSOR emp_cursor IS SELECT empno, ename, sal FROM emp WHERE deptno=v_deptno ORDER BY ename;
+BEGIN
+    OPEN emp_cursor;
+    LOOP
+        FETCH emp_cursor INTO v_empno, v_ename, v_sal;
+        EXIT WHEN emp_cursor%NOTFOUND;
+        dbms_output.put_line(lpad(v_empno,10)||lpad(v_ename,10)|| lpad(v_sal,10) );
+    END LOOP;
+    close emp_cursor;
+END;

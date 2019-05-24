@@ -1,0 +1,82 @@
+/*
+--<< 기초 문제 >> scott 계정
+SELECT * FROM emp;
+SELECT * FROM dept;
+DESC emp;
+--1. EMP 테이블에서 사원번호, 이름, 업무, 부서번호와 DEPT 테이블에서 부서명, 근무지를 출력
+SELECT e.empno empno, e.ename ename, e.job job, e.deptno deptno, d.dname dname, d.loc loc
+FROM emp e INNER JOIN dept d
+ON e.deptno = d.deptno;
+
+--2. SALESMAN 사원만 사원번호, 이름, 급여, 부서명, 근무지를 출력
+SELECT e.empno empno, e.ename ename, e.SAL SAL, d.dname dname, d.loc loc
+FROM emp e LEFT OUTER JOIN dept d
+ON e.deptno = d.deptno
+WHERE e.job = 'SALESMAN';
+
+--3. 보너스(comm)를 받는 사원에 대해 이름, 부서명, 위치를 출력
+SELECT e.ename ename, d.dname dname, d.loc loc
+FROM emp e INNER JOIN dept d
+ON (e.deptno = d.deptno) AND nvl(e.comm,0)<>0;
+
+--4. 부서별 부서명과 급여 합계를 출력
+SELECT d.dname dname, sum(sal) sum
+FROM emp e INNER JOIN dept d
+ON (e.deptno = d.deptno)
+GROUP BY d.dname;
+*/
+------------------------------------------------------------------
+/* */
+SELECT * FROM employees;
+SELECT * FROM jobs;
+--<도전문제 > HR 계정
+--1. 사원번호, 사원명, 부서명 출력
+SELECT e.employee_id id, e.first_name || e.last_name full_name, d.department_name dname
+FROM employees e INNER JOIN departments d
+ON e.department_id = d.department_id;
+
+--2. 사원번호, 사원명, 업무명, 부서명 출력
+SELECT e.employee_id id, e.first_name || e.last_name full_name, d.department_name dname, j.job_title job_title
+FROM employees e INNER JOIN departments d
+ON e.department_id = d.department_id
+INNER JOIN jobs j
+ON e.job_id = j.job_id;
+
+--3. 사원번호, 사원명, 부서명, 위치 출력
+select e.employee_id id, e.first_name || e.last_name fullname,d.department_name depart, l.city city
+from employees e, departments d, locations l
+where e.department_id=d.department_id AND d.location_id = l.location_id;
+
+select e.employee_id id, e.first_name || e.last_name fullname,d.department_name depart, l.city city
+from employees e INNER JOIN departments d
+ON e.department_id=d.department_id
+INNER JOIN locations l
+ON (d.location_id = l.location_id);
+
+--4. 사원번호, 사원명, 업무명, 부서명, 위치출력
+select e.employee_id id, e.first_name || e.last_name fullname,j.job_title job,d.department_name depart, l.city city
+from employees e, departments d, jobs j, locations l
+where (e.job_id =j.job_id) and (e.department_id = d.department_id) and (d.location_id = l.location_id);
+
+
+select e.employee_id id, e.first_name || e.last_name fullname,j.job_title job,d.department_name depart, l.city city
+FROM EMPLOYEES e INNER JOIN JOBS j
+ON e.JOB_ID = j.JOB_ID
+INNER JOIN DEPARTMENTS d
+ON e.department_id = d.department_id
+INNER JOIN locations l
+ON D.location_id = L.location_id;
+
+--5. 입사년도별 최고 월급을 받는 사원의 이름과 부서명을 출력
+SELECT e1.FIRST_NAME, e1.HIRE_DATE, e1.SALARY, d.DEPARTMENT_NAME
+FROM EMPLOYEES e1
+INNER JOIN (
+SELECT TO_CHAR(HIRE_DATE, 'YYYY') year, MAX(SALARY) maxsal
+FROM EMPLOYEES e2
+GROUP BY TO_CHAR(HIRE_DATE, 'YYYY')
+ORDER BY year
+) e2
+ON TO_CHAR(e1.HIRE_DATE, 'YYYY') = e2.year
+AND e1.SALARY = e2.maxsal
+LEFT JOIN DEPARTMENTS d ON e1.DEPARTMENT_ID = d.DEPARTMENT_ID
+ORDER BY HIRE_DATE;
